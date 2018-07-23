@@ -5,6 +5,11 @@ import (
 	"bytes"
 	"net"
 	"testing"
+
+	"github.com/influxdata/telegraf"
+	"github.com/influxdata/telegraf/testutil"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestDevo_tcp(t *testing.T) {
@@ -13,7 +18,7 @@ func TestDevo_tcp(t *testing.T) {
 
 	d := newDevo()
 	d.Endpoint = "tcp://" + listener.Addr().String()
-	d.SyslogTag = "test.keep.free:"
+	d.SyslogTag = "test.keep.free"
 
 	err = d.Connect()
 	require.NoError(t, err)
@@ -30,7 +35,7 @@ func TestDevo_udp(t *testing.T) {
 
 	d := newDevo()
 	d.Endpoint = "udp://" + listener.LocalAddr().String()
-	d.SyslogTag = "test.keep.free:"
+	d.SyslogTag = "test.keep.free"
 
 	err = d.Connect()
 	require.NoError(t, err)
@@ -54,8 +59,8 @@ func testDevo_stream(t *testing.T, d *Devo, lconn net.Conn) {
 	require.True(t, scnr.Scan())
 	mstr2in := scnr.Text() + "\n"
 
-	assert.Equal(t, string(mbs1out), mstr1in)
-	assert.Equal(t, string(mbs2out), mstr2in)
+	assert.Contains(t, mstr1in, string(mbs1out))
+	assert.Contains(t, mstr2in, string(mbs2out))
 }
 
 func testDevo_packet(t *testing.T, d *Devo, lconn net.PacketConn) {
@@ -82,6 +87,6 @@ func testDevo_packet(t *testing.T, d *Devo, lconn net.PacketConn) {
 	}
 	require.Len(t, mstrins, 2)
 
-	assert.Equal(t, string(mbs1out), mstrins[0])
-	assert.Equal(t, string(mbs2out), mstrins[1])
+	assert.Contains(t, mstrins[0], string(mbs1out))
+	assert.Contains(t, mstrins[1], string(mbs2out))
 }

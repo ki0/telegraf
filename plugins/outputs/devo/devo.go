@@ -6,15 +6,18 @@ import (
 	"strings"
 
 	syslog "github.com/RackSec/srslog"
+	"github.com/influxdata/telegraf"
 	tlsint "github.com/influxdata/telegraf/internal/tls"
+	"github.com/influxdata/telegraf/plugins/outputs"
+	"github.com/influxdata/telegraf/plugins/serializers"
 )
 
 type Devo struct {
 	Endpoint  string
 	SyslogTag string
-	conn      syslog
 	tlsint.ClientConfig
 	serializers.Serializer
+	SyslogWriter *syslog.Writer
 }
 
 var sampleConfig = `
@@ -41,7 +44,7 @@ func (d *Devo) Description() string {
 
 func (d *Devo) Connect() error {
 	if len(d.Endpoint) == 0 {
-		d.Servers = append(d.Servers, "tcp://127.0.0.1:514")
+		d.Endpoint = "tcp://127.0.0.1:514"
 	}
 
 	// Set tls config
@@ -52,30 +55,30 @@ func (d *Devo) Connect() error {
 
 	spl := strings.SplitN(d.Endpoint, "://", 2)
 	if len(spl) != 2 {
-		return fmt.Errorf("invalid address: %s", sw.Address)
+		return fmt.Errorf("invalid address: %s", d.Endpoint)
 	}
 
 	if d.SyslogTag == "" {
-		d.SyslogTag = "test.keep.free:"
+		d.SyslogTag = "test.keep.free"
 	}
 
 	// Get Connections
-	var c syslog
-	if tlsCfg == nil {
-		c, err = syslog.Dial(spl[0], spl[1], syslog.LOG_NOTICE, d.SyslogTag)
+	var w = &syslog.Writer{}
+	if tlsConfig == nil {
+		w, err = syslog.Dial(spl[0], spl[1], syslog.LOG_NOTICE, d.SyslogTag)
 	} else {
-		c, err = syslog.DialWithTLSConfig("tcp+tls", spl[1], syslog.LOG_NOTICE, d.SyslogTag, tlsConfig)
+		w, err = syslog.DialWithTLSConfig("tcp+tls", spl[1], syslog.LOG_NOTICE, d.SyslogTag, tlsConfig)
 	}
 	if err != nil {
 		return err
 	}
 
-	d.conn = c
+	d.SyslogWriter = w
 	return nil
 }
 
 func (d *Devo) Write(metrics []telegraf.Metric) error {
-	if d.conn == nil {
+	if d.SyslogWriter == nil {
 		// previous write failed with permanent error and socket was closed.
 		if err := d.Connect(); err != nil {
 			return err
@@ -85,15 +88,12 @@ func (d *Devo) Write(metrics []telegraf.Metric) error {
 	for _, m := range metrics {
 		bs, err := d.Serialize(m)
 		if err != nil {
-			//TODO log & keep going with remaining metrics
 			return err
 		}
-		if _, err := d.conn.Write(bs); err != nil {
-			//TODO log & keep going with remaining strings
+		if _, err := d.SyslogWriter.Write(bs); err != nil {
 			if err, ok := err.(net.Error); !ok || !err.Temporary() {
-				// permanent error. close the connection
 				d.Close()
-				d.conn = nil
+				d.SyslogWriter = nil
 				return fmt.Errorf("closing connection: %v", err)
 			}
 			return err
@@ -105,12 +105,12 @@ func (d *Devo) Write(metrics []telegraf.Metric) error {
 
 func (d *Devo) Close() error {
 	// Closing all connections
-	if d.conn == nil {
+	if d.SyslogWriter == nil {
 		return nil
 	}
-	err := d.conn.Close()
-	d.conn = nil
-	return nil
+	err := d.SyslogWriter.Close()
+	d.SyslogWriter = nil
+	return err
 }
 
 func (d *Devo) SetSerializer(s serializers.Serializer) {
