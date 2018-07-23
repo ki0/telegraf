@@ -22,7 +22,7 @@ type Devo struct {
 
 var sampleConfig = `
   ## TCP endpoint for your devo entry point.
-  endpoint = "localhost:514"
+  endpoint = "tcp://localhost:514"
   ## Prefix metrics name, syslog tag.
   syslogtag = ""
 
