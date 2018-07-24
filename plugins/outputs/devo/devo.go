@@ -59,7 +59,7 @@ func (d *Devo) Connect() error {
 	}
 
 	if d.Tag == "" {
-		d.Tag = "test.keep.free"
+		d.Tag = "unknown.unknown"
 	}
 
 	// Get Connections
