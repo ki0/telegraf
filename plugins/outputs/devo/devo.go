@@ -73,7 +73,7 @@ func (d *Devo) Connect() error {
 		return err
 	}
 
-	w.SetFormatter(syslog.RFC5424Formatter)
+	w.SetFormatter(syslog.RFC3164Formatter)
 	d.SyslogWriter = w
 	return nil
 }
