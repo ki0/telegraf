@@ -9,7 +9,7 @@ This plugin send metrics in influx data format to Devo platform by tcp, udp and 
   ## TCP endpoint for your devo entry point.
   # endpoint = "tcp://localhost:514"
   ## Prefix metrics name, syslog tag.
-  # syslogtag = ""
+  # tag = ""
 
   ## Optional TLS Config
   # tls_ca = "/etc/telegraf/ca.pem"
