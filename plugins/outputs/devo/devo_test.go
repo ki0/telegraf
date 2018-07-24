@@ -18,7 +18,7 @@ func TestDevo_tcp(t *testing.T) {
 
 	d := newDevo()
 	d.Endpoint = "tcp://" + listener.Addr().String()
-	d.SyslogTag = "test.keep.free"
+	d.Tag = "test.keep.free"
 
 	err = d.Connect()
 	require.NoError(t, err)
@@ -35,7 +35,7 @@ func TestDevo_udp(t *testing.T) {
 
 	d := newDevo()
 	d.Endpoint = "udp://" + listener.LocalAddr().String()
-	d.SyslogTag = "test.keep.free"
+	d.Tag = "test.keep.free"
 
 	err = d.Connect()
 	require.NoError(t, err)

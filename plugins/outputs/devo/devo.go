@@ -13,8 +13,8 @@ import (
 )
 
 type Devo struct {
-	Endpoint  string
-	SyslogTag string
+	Endpoint string
+	Tag      string
 	tlsint.ClientConfig
 	serializers.Serializer
 	SyslogWriter *syslog.Writer
@@ -24,7 +24,7 @@ var sampleConfig = `
   ## TCP endpoint for your devo entry point.
   # endpoint = "tcp://localhost:514"
   ## Prefix metrics name, syslog tag.
-  # syslogtag = ""
+  # tag = ""
 
   ## Optional TLS Config
   # tls_ca = "/etc/telegraf/ca.pem"
@@ -58,16 +58,17 @@ func (d *Devo) Connect() error {
 		return fmt.Errorf("invalid address: %s", d.Endpoint)
 	}
 
-	if d.SyslogTag == "" {
-		d.SyslogTag = "test.keep.free"
+	if d.Tag == "" {
+		d.Tag = "test.keep.free"
 	}
 
 	// Get Connections
 	var w = &syslog.Writer{}
+	w.SetFormatter(RFC5424Formatter)
 	if tlsConfig == nil {
-		w, err = syslog.Dial(spl[0], spl[1], syslog.LOG_NOTICE, d.SyslogTag)
+		w, err = syslog.Dial(spl[0], spl[1], syslog.LOG_USER|syslog.LOG_INFO, d.Tag)
 	} else {
-		w, err = syslog.DialWithTLSConfig("tcp+tls", spl[1], syslog.LOG_NOTICE, d.SyslogTag, tlsConfig)
+		w, err = syslog.DialWithTLSConfig("tcp+tls", spl[1], syslog.LOG_USER|syslog.LOG_INFO, d.Tag, tlsConfig)
 	}
 	if err != nil {
 		return err
