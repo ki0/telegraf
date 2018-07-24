@@ -64,7 +64,6 @@ func (d *Devo) Connect() error {
 
 	// Get Connections
 	var w = &syslog.Writer{}
-	w.SetFormatter(RFC5424Formatter)
 	if tlsConfig == nil {
 		w, err = syslog.Dial(spl[0], spl[1], syslog.LOG_USER|syslog.LOG_INFO, d.Tag)
 	} else {
@@ -74,6 +73,7 @@ func (d *Devo) Connect() error {
 		return err
 	}
 
+	w.SetFormatter(syslog.RFC5424Formatter)
 	d.SyslogWriter = w
 	return nil
 }
